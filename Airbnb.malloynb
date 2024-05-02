@@ -1,0 +1,109 @@
+>>>markdown
+Airbnb Analysis
+>>>markdown
+Importing Dataset
+>>>malloy
+source: bnb is duckdb.table('Airbnb.parquet') extend {}
+>>>malloy
+run: bnb -> {
+    select: *
+    limit: 10
+}
+>>>markdown
+Min and Max amounts of bedrooms in dataset.
+>>>malloy
+run: bnb -> {
+    aggregate: Maxbed is max(bedrooms), Minbed is min(bedrooms)
+}
+>>>markdown
+Average rating based on Cancellation Policy
+>>>malloy
+# bar_chart
+run: bnb -> {
+    group_by: cancellation_policy
+    aggregate: Rating is avg(review_scores_rating)
+}
+>>>markdown
+Average Rating based on Property Type
+>>>malloy
+# bar_chart
+run: bnb -> {
+    group_by: property_type
+    aggregate: Rating is avg(review_scores_rating)
+}
+>>>markdown
+Number of Reviews for Rating
+>>>malloy
+# line_chart
+run: bnb -> {
+    group_by: number_of_reviews
+    aggregate: Rating is avg(review_scores_rating)
+}
+>>>markdown
+Showing Avg Bedroom and Bathroom amounts by Location and Property Type
+>>>malloy
+# dashboard
+run: bnb -> {
+    group_by: Location is city
+
+nest: LocationBreakdown is {
+    group_by: Property is property_type
+    aggregate: AvgBed is avg(bedrooms), AvgBath is avg(bathrooms)
+    order_by: Property
+
+  }
+}
+>>>markdown
+Amount of Properties listed. Sorted by Property Type and Location
+>>>malloy
+# dashboard
+run: bnb -> {
+    group_by: Location is city
+
+nest: LocationBreakdown is {
+    group_by: property_type
+    aggregate: PropertyCount is count()
+    order_by: property_type
+
+  }
+}
+>>>markdown
+Average rating of Property Type based on Location (Property Count is included)
+>>>malloy
+# dashboard
+run: bnb -> {
+    group_by: Location is city
+
+nest: LocationBreakdown is {
+    group_by: property_type
+    aggregate: PropertyCount is count(), Rating is avg(review_scores_rating)
+    order_by: Rating desc, PropertyCount desc
+
+  }
+}
+>>>markdown
+Nested Dashbaord showing total count of listings, broken down by Room Type and Amount.
+Shows Top 5 Neighbourhood's with highest avg Bed and Bath count. Also shows Lowest 5 Avg Bed and Bath Neighbourhood. 
+>>>malloy
+# dashboard
+run: bnb -> {
+    group_by: Location is city
+    aggregate: city is count()
+    nest: Details is {
+        group_by: room_type
+        aggregate: RoomAmount is count()
+        nest: BedBath is {
+            group_by: neighbourhood
+            aggregate: Bed is avg(bedrooms), Bath is avg(bathrooms)
+            order_by: Bed desc, Bath desc
+            limit: 5
+        }
+    }
+        nest: BedBath is {
+            group_by: neighbourhood
+            aggregate: Bed is avg(bedrooms), Bath is avg(bathrooms)
+            order_by: Bed asc, Bath asc
+            limit: 5
+}
+    }
+    
